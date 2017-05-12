@@ -24,17 +24,48 @@ template <typename Ptr> inline bool oMHashEqualToKey(const Ptr *key1, const Ptr 
     return quintptr(key1) == quintptr(key2);
 }
 
+template<typename Key, typename OMHashValue>
+class OMHash : public QHash < Key, OMHashValue >
+{
+public:
+	bool operator == (const OMHash &other) const
+	{
+		if (size() != other.size()) {
+			return false;
+		}
+
+		if (QHash<Key, OMHashValue >::operator ==(other)) {
+			return true;
+		}
+
+		typename QHash<Key, OMHashValue >::const_iterator it1 = this->constBegin();
+		typename QHash<Key, OMHashValue >::const_iterator it2 = other.constBegin();
+
+		while (it1 != this->end()) {
+			OMHashValue v1 = it1.value();
+			OMHashValue v2 = it2.value();
+
+			if ((v1.first != v2.first) || !oMHashEqualToKey<Key>(it1.key(), it2.key())) {
+				return false;
+			}
+			++it1;
+			++it2;
+		}
+		return true;
+	}
+};
+
 template <typename Key, typename Value>
 class OrderedMap
 {
-    class OMHash;
+    //class OMHash;
 
     typedef typename QLinkedList<Key>::iterator QllIterator;
     typedef typename QLinkedList<Key>::const_iterator QllConstIterator;
     typedef QPair<Value, QllIterator> OMHashValue;
 
-    typedef typename OMHash::iterator OMHashIterator;
-    typedef typename OMHash::const_iterator OMHashConstIterator;
+	typedef typename OMHash<Key, OMHashValue>::iterator OMHashIterator;
+	typedef typename OMHash<Key, OMHashValue>::const_iterator OMHashConstIterator;
 
 public:
 
@@ -58,7 +89,7 @@ public:
 
     bool isEmpty() const;
 
-    std::list<Key> keys() const;
+	QLinkedList<Key> keys() const;
 
     int remove(const Key &key);
 
@@ -105,11 +136,11 @@ public:
     public:
 
         QllIterator qllIter;
-        OMHash *data;
+		OMHash<Key, OMHashValue> *data;
 
         iterator() : data(NULL) {}
 
-        iterator(const QllIterator &qllIter, OMHash *data) :
+		iterator(const QllIterator &qllIter, OMHash<Key, OMHashValue> *data) :
             qllIter(qllIter), data(data) {}
 
         const Key & key() const
@@ -287,39 +318,7 @@ public:
 
 private:
 
-    class OMHash : public QHash<Key, OMHashValue >
-    {
-    public:
-        bool operator == (const OMHash &other) const
-        {
-            if (size() != other.size()) {
-                return false;
-            }
-
-            if (QHash<Key, OMHashValue >::operator ==(other)) {
-                return true;
-            }
-
-            typename QHash<Key, OMHashValue >::const_iterator it1 = this->constBegin();
-            typename QHash<Key, OMHashValue >::const_iterator it2 = other.constBegin();
-
-            while(it1 != this->end()) {
-                OMHashValue v1 = it1.value();
-                OMHashValue v2 = it2.value();
-
-                if ((v1.first != v2.first) || !oMHashEqualToKey<Key>(it1.key(), it2.key())) {
-                    return false;
-                }
-                ++it1;
-                ++it2;
-            }
-            return true;
-        }
-    };
-
-private:
-
-    OMHash data;
+	OMHash<Key, OMHashValue> data;
     QLinkedList<Key> insertOrder;
 };
 
@@ -381,9 +380,10 @@ bool OrderedMap<Key, Value>::isEmpty() const
 }
 
 template<typename Key, typename Value>
-std::list<Key> OrderedMap<Key, Value>::keys() const
+QLinkedList<Key> OrderedMap<Key, Value>::keys() const
 {
-    return insertOrder.toStdList();
+	//QList<Key> keyOrder;
+    return insertOrder;
 }
 
 template<typename Key, typename Value>
