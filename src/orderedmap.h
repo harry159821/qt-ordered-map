@@ -363,14 +363,19 @@ typename OrderedMap<Key, Value>::iterator OrderedMap<Key, Value>::insert(const K
         return iterator(ioIter, &data);
     }
 
-    OMHashValue pair = it.value();
-    // remove old reference
-    insertOrder.erase(pair.second);
-    // Add new reference
-    QllIterator ioIter = insertOrder.insert(insertOrder.end(), key);
+    OMHashValue& pair = it.value();//2.Get Real Value IN Hash
+
+    //remove old reference
+    //insertOrder.erase(pair.second);//insertOrder(QLinkedList), remove old LinkedList
+	
+	//Add new reference
+	//QllIterator ioIter = insertOrder.insert(insertOrder.end(), key);
+
+	//Find Old Reference
+	//QllIterator ioIter = qFind(insertOrder.begin(), insertOrder.end(), key);	
     pair.first = value;
-    pair.second = ioIter;
-    return iterator(ioIter, &data);
+    //pair.second = ioIter;
+	return iterator(pair.second, &data);
 }
 
 template <typename Key, typename Value>
